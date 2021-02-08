@@ -8,13 +8,15 @@ DIMENSIONX = -1
 DIMENSIONY = -1
 INFILE = "evolution.txt"
 
-with open(INFILE, "read") as infile:
+with open(INFILE) as infile:
     line = infile.readline()
     NEPOCHS = int(line.replace("\n", "").split(",")[0])
     DIMENSIONX = int(line.replace("\n", "").split(",")[1])
     DIMENSIONY = int(line.replace("\n", "").split(",")[2])
 
-epochs, x, y = np.genfromtxt(open(INFILE, "read"), skip_header=1, delimiter=",", usecols=(0,1,2), unpack=True)
+NEPOCHS = 20
+
+epochs, x, y = np.genfromtxt(open(INFILE), skip_header=1, delimiter=",", usecols=(0,1,2), unpack=True)
 fpaths = []
 
 for epoch in range(NEPOCHS):
@@ -39,11 +41,11 @@ for epoch in range(NEPOCHS):
     fpaths.append(fpath)
 
 # visualise training as video of test samples
-with imageio.get_writer("evolution.mp4" mode='I') as writer:
+with imageio.get_writer("evolution.mp4", mode='I') as writer:
     for fpath in fpaths:
         image = imageio.imread(fpath)
         writer.append_data(image)
 
 # cleanup images
-for filename in fpath:
+for filename in fpaths:
     os.remove(filename)
