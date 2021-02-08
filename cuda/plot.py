@@ -17,7 +17,7 @@ with open(INFILE, "read") as infile:
 epochs, x, y = np.genfromtxt(open(INFILE, "read"), skip_header=1, delimiter=",", usecols=(0,1,2), unpack=True)
 fpaths = []
 
-for epoch in sorted(np.unique(epochs)):
+for epoch in range(NEPOCHS):
     h2 = ROOT.TH2F("h2_epoch%i"%epoch, "h2_epoch%i"%epoch, DIMENSIONX, -0.5, DIMENSIONX-0.5, DIMENSIONY, -0.5, DIMENSIONY-0.5)
     x_selected = x[np.where(epochs==epoch)]
     y_selected = y[np.where(epochs==epoch)]

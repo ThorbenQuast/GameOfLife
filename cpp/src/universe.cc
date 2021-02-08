@@ -64,7 +64,8 @@ void set_initial_conditions(bool ***u, int dx, int dy, float p)
     for (int i = 0; i < dx; i++)
         for (int j = 0; j < dy; j++)
         {
-            if ((rand() % 1000) < p * 1000)
+            float _value = ((i*173+j*51) % 100) / 100.;
+            if (_value < p)
             {
                 u[0][i][j] = true;
             }

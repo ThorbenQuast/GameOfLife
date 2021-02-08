@@ -1,6 +1,8 @@
+//nvcc -o gol gol.cu
+
 #define NEPOCHS 1000
-#define DIMENSIONX 1000
-#define DIMENSIONY 1000
+#define DIMENSIONX 500
+#define DIMENSIONY 500
 
 #include <stdio.h>
 #include <cstdlib>
@@ -62,7 +64,8 @@ void set_initial_conditions(bool *u, int dx, int dy, float p)
     for (int i = 0; i < dx; i++)
         for (int j = 0; j < dy; j++)
         {
-            if (((rand() % 1000) < p * 1000))
+            float _value = ((i*173+j*51) % 100) / 100.;
+            if (_value < p)
             {
                 u[i*dx+j] = true;
             }
@@ -90,7 +93,7 @@ int main(void)
   for (int n=0; n<NEPOCHS-1; n++) {
     if (n % 10 == 0)
     std::cout << n << "/" << NEPOCHS << std::endl;
-    Evolve<<<1+DIMENSIONX*DIMENSIONY/256, 256>>>(cuda_universe, n, DIMENSIONX, DIMENSIONY);
+    Evolve<<<1+DIMENSIONX*DIMENSIONY/1024, 1024>>>(cuda_universe, n, DIMENSIONX, DIMENSIONY);
   }
   cudaEventRecord(stop);
   float milliseconds = 0;

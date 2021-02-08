@@ -1,6 +1,6 @@
 #define NEPOCHS 1000
-#define DIMENSIONX 1000
-#define DIMENSIONY 1000
+#define DIMENSIONX 500
+#define DIMENSIONY 500
 
 #include <iostream>
 #include "include/universe.hh"
