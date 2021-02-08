@@ -1,14 +1,12 @@
-#include <cstdlib>
-#include <iostream>
-using namespace std;
+#include <algorithm>
 
 size_t GetNActiveNeighbours(bool ***u, int n, int dx, int dy, int nx, int ny)
 {
     size_t NActives = 0;
-    int nmin_x = fmax(0, nx - 1);
-    int nmax_x = fmin(nx + 1, dx - 1);
-    int nmin_y = fmax(0, ny - 1);
-    int nmax_y = fmin(ny + 1, dy - 1);
+    int nmin_x = std::max(0, nx - 1);
+    int nmax_x = std::min(nx + 1, dx - 1);
+    int nmin_y = std::max(0, ny - 1);
+    int nmax_y = std::min(ny + 1, dy - 1);
 
     for (int i = nmin_x; i <= nmax_x; i++)
         for (int j = nmin_y; j <= nmax_y; j++)

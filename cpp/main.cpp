@@ -1,14 +1,11 @@
+#define NEPOCHS 1000
+#define DIMENSIONX 1000
+#define DIMENSIONY 1000
+
 #include <iostream>
 #include "include/universe.hh"
-#include "TCanvas.h"
-#include "TH2F.h"
-#include "TFile.h"
-#include <sstream>
+#include <fstream>
 #include <chrono>
-
-#define NEPOCHS 15
-#define DIMENSIONX 10000
-#define DIMENSIONY 10000
 
 int main()
 {
@@ -36,31 +33,17 @@ int main()
     elapsed_seconds = end - start;
     std::cout << "Ellapsed time in seconds: " << elapsed_seconds.count() << std::endl;
 
-    TCanvas *canvas = new TCanvas("canvas", "canvas", 900, 800);
-    for (int n = 0; n < NEPOCHS; n++)
-    {
-        std::ostringstream s1;
-        s1 << "epoch_ " << n;
-        TH2F *graphic = new TH2F(s1.str().c_str(), s1.str().c_str(), DIMENSIONX, -0.5, DIMENSIONX - 0.5, DIMENSIONY, -0.5, DIMENSIONY - 0.5);
-
-        for (int i = 0; i < DIMENSIONX; i++)
-            for (int j = 0; j < DIMENSIONY; j++)
-            {
-                float weight = universe[n][i][j] ? 1 : 0.01;
-                graphic->SetBinContent(i + 1, j + 1, weight);
-            }
-
-        graphic->SetTitle(s1.str().c_str());
-        graphic->GetXaxis()->SetTitle("x (a.u.)");
-        graphic->GetYaxis()->SetTitle("y (a.u.)");
-        graphic->GetXaxis()->SetLabelSize(0);
-        graphic->GetYaxis()->SetLabelSize(0);
-        graphic->SetStats(false);
-
-        graphic->Draw("COLZ");
-        s1 << ".png";
-        canvas->Print(s1.str().c_str());
+    //write everything to file  
+    std::ofstream outfile;
+    outfile.open ("evolution.txt");
+    outfile << NEPOCHS << " , " << DIMENSIONX << " , " << DIMENSIONY << "\n";
+    int nepoch, nx, ny;
+    for (int nepoch=0; nepoch<NEPOCHS; nepoch++) for (int nx=0; nx<DIMENSIONX; nx++) for (int ny=0; ny<DIMENSIONY; ny++) {
+        if (universe[nepoch][nx][ny]) {
+            outfile << nepoch << " , " << nx << " , " << ny << "\n";
+        }
     }
+    outfile.close();
 
     return 0;
 }
