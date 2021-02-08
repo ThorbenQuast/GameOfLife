@@ -37,3 +37,13 @@ for epoch in range(NEPOCHS):
     fpath = "epoch_%i.png" % epoch
     canvas.Print(fpath)
     fpaths.append(fpath)
+
+# visualise training as video of test samples
+with imageio.get_writer("evolution.mp4" mode='I') as writer:
+    for fpath in fpaths:
+        image = imageio.imread(fpath)
+        writer.append_data(image)
+
+# cleanup images
+for filename in fpath:
+    os.remove(filename)
