@@ -14,8 +14,6 @@ with open(INFILE) as infile:
     DIMENSIONX = int(line.replace("\n", "").split(",")[1])
     DIMENSIONY = int(line.replace("\n", "").split(",")[2])
 
-NEPOCHS = 20
-
 epochs, x, y = np.genfromtxt(open(INFILE), skip_header=1, delimiter=",", usecols=(0,1,2), unpack=True)
 fpaths = []
 
