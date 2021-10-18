@@ -1,8 +1,8 @@
 //nvcc -o gol gol.cu
 
-#define NEPOCHS 5000
-#define DIMENSIONX 800
-#define DIMENSIONY 450
+#define NEPOCHS 1000
+#define DIMENSIONX 100
+#define DIMENSIONY 100
 
 #include <stdio.h>
 #include <cstdlib>
@@ -12,39 +12,58 @@
 __global__
 void Evolve(bool *u, int n, int dx, int dy)
 {
-    int entry_index = blockIdx.x*blockDim.x + threadIdx.x;
-    if (entry_index>=dx*dy) return;
-    
-    int i = entry_index / dy;
-    int j = entry_index % dy;
-
-    //get number of neighbors
-    size_t NActiveNeighbors = 0;
-    int nmin_x = max(0, i - 1);
-    int nmax_x = min(i + 1, dx - 1);
-    int nmin_y = max(0, j - 1);
-    int nmax_y = min(j + 1, dy - 1);
-    for (int ii = nmin_x; ii <= nmax_x; ii++)
-        for (int jj = nmin_y; jj <= nmax_y; jj++)
-        {
-            if ((i == ii) && (j == jj))
-                continue;
-            if (u[n*dx*dy+ii*dy+jj]) NActiveNeighbors += 1;
-        }
-
-    bool active_pre, active_post;
     int n_next = n + 1;
-        
-    active_pre = u[n*dx*dy+i*dy+j];
-    active_post = false;
-    if (active_pre && (NActiveNeighbors == 2))
-        active_post = true;
-    else if (active_pre && (NActiveNeighbors == 3))
-        active_post = true;
-    else if ((!active_pre) && (NActiveNeighbors == 3))
-        active_post = true;
-    u[n_next*dx*dy+i*dy+j] = active_post;
+    bool active_pre, active_post;
+    
+    __shared__ bool shared_u[DIMENSIONX*DIMENSIONY];
+    //__shared__ bool shared_u_next[DIMENSIONX*DIMENSIONY];
+    //copy state in shared memory
+    for (int i=threadIdx.x; i<DIMENSIONX*DIMENSIONY; i+=blockDim.x) {
+        shared_u[i] = u[n*dx*dy+i];
+    }
 
+    __syncthreads();
+
+    for (int entry_index=threadIdx.x+blockIdx.x*blockDim.x; entry_index<DIMENSIONX*DIMENSIONY; entry_index+=blockDim.x*gridDim.x) {
+        int i = entry_index / dy;
+        int j = entry_index % dy;
+    
+        //get number of neighbors
+        size_t NActiveNeighbors = 0;
+        int nmin_x = max(0, i - 1);
+        int nmax_x = min(i + 1, dx - 1);
+        int nmin_y = max(0, j - 1);
+        int nmax_y = min(j + 1, dy - 1);
+        for (int ii = nmin_x; ii <= nmax_x; ii++)
+            for (int jj = nmin_y; jj <= nmax_y; jj++)
+            {
+                if ((i == ii) && (j == jj))
+                    continue;
+                if (shared_u[ii*dy+jj]) NActiveNeighbors += 1;
+            }
+            
+        active_pre = shared_u[i*dy+j];
+        active_post = false;
+        if (active_pre && (NActiveNeighbors == 2))
+            active_post = true;
+        else if (active_pre && (NActiveNeighbors == 3))
+            active_post = true;
+        else if ((!active_pre) && (NActiveNeighbors == 3))
+            active_post = true;
+            u[n_next*dx*dy+i*dy+j] = active_post;
+    }
+
+    /*
+    __syncthreads();
+    for (int entry_index=threadIdx.x+blockIdx.x*blockDim.x; entry_index<DIMENSIONX*DIMENSIONY; entry_index+=blockDim.x*gridDim.x) {
+        int i = entry_index / dy;
+        int j = entry_index % dy;
+        
+        u[n_next*dx*dy+i*dy+j] = shared_u_next[i*dy+j];
+    }    
+
+    __syncthreads();
+    */
     return;
 }
 
@@ -61,42 +80,42 @@ bool *allocate_universe(int n, int dx, int dy)
 
 
 bool glider_gun_field(int i, int j) {
-    if (((i%40)==1)&&((j%100)==5)) return true;
-    if (((i%40)==1)&&((j%100)==6)) return true;
-    if (((i%40)==2)&&((j%100)==5)) return true;
-    if (((i%40)==2)&&((j%100)==6)) return true;
-    if (((i%40)==11)&&((j%100)==5)) return true;
-    if (((i%40)==11)&&((j%100)==6)) return true;
-    if (((i%40)==11)&&((j%100)==7)) return true;
-    if (((i%40)==12)&&((j%100)==4)) return true;
-    if (((i%40)==12)&&((j%100)==8)) return true;
-    if (((i%40)==13)&&((j%100)==3)) return true;
-    if (((i%40)==13)&&((j%100)==9)) return true;
-    if (((i%40)==14)&&((j%100)==3)) return true;
-    if (((i%40)==14)&&((j%100)==9)) return true;
-    if (((i%40)==15)&&((j%100)==6)) return true;
-    if (((i%40)==16)&&((j%100)==4)) return true;
-    if (((i%40)==16)&&((j%100)==8)) return true;
-    if (((i%40)==17)&&((j%100)==5)) return true;
-    if (((i%40)==17)&&((j%100)==6)) return true;
-    if (((i%40)==17)&&((j%100)==7)) return true;
-    if (((i%40)==18)&&((j%100)==6)) return true;
-    if (((i%40)==21)&&((j%100)==3)) return true;
-    if (((i%40)==21)&&((j%100)==4)) return true;
-    if (((i%40)==21)&&((j%100)==5)) return true;
-    if (((i%40)==22)&&((j%100)==3)) return true;
-    if (((i%40)==22)&&((j%100)==4)) return true;
-    if (((i%40)==22)&&((j%100)==5)) return true;
-    if (((i%40)==23)&&((j%100)==2)) return true;
-    if (((i%40)==23)&&((j%100)==6)) return true;
-    if (((i%40)==25)&&((j%100)==1)) return true;
-    if (((i%40)==25)&&((j%100)==2)) return true;
-    if (((i%40)==25)&&((j%100)==6)) return true;
-    if (((i%40)==25)&&((j%100)==7)) return true;
-    if (((i%40)==35)&&((j%100)==3)) return true;
-    if (((i%40)==35)&&((j%100)==4)) return true;
-    if (((i%40)==36)&&((j%100)==3)) return true;
-    if (((i%40)==36)&&((j%100)==4)) return true;
+    if (((i%40)==1)&&((j%30)==5)) return true;
+    if (((i%40)==1)&&((j%30)==6)) return true;
+    if (((i%40)==2)&&((j%30)==5)) return true;
+    if (((i%40)==2)&&((j%30)==6)) return true;
+    if (((i%40)==11)&&((j%30)==5)) return true;
+    if (((i%40)==11)&&((j%30)==6)) return true;
+    if (((i%40)==11)&&((j%30)==7)) return true;
+    if (((i%40)==12)&&((j%30)==4)) return true;
+    if (((i%40)==12)&&((j%30)==8)) return true;
+    if (((i%40)==13)&&((j%30)==3)) return true;
+    if (((i%40)==13)&&((j%30)==9)) return true;
+    if (((i%40)==14)&&((j%30)==3)) return true;
+    if (((i%40)==14)&&((j%30)==9)) return true;
+    if (((i%40)==15)&&((j%30)==6)) return true;
+    if (((i%40)==16)&&((j%30)==4)) return true;
+    if (((i%40)==16)&&((j%30)==8)) return true;
+    if (((i%40)==17)&&((j%30)==5)) return true;
+    if (((i%40)==17)&&((j%30)==6)) return true;
+    if (((i%40)==17)&&((j%30)==7)) return true;
+    if (((i%40)==18)&&((j%30)==6)) return true;
+    if (((i%40)==21)&&((j%30)==3)) return true;
+    if (((i%40)==21)&&((j%30)==4)) return true;
+    if (((i%40)==21)&&((j%30)==5)) return true;
+    if (((i%40)==22)&&((j%30)==3)) return true;
+    if (((i%40)==22)&&((j%30)==4)) return true;
+    if (((i%40)==22)&&((j%30)==5)) return true;
+    if (((i%40)==23)&&((j%30)==2)) return true;
+    if (((i%40)==23)&&((j%30)==6)) return true;
+    if (((i%40)==25)&&((j%30)==1)) return true;
+    if (((i%40)==25)&&((j%30)==2)) return true;
+    if (((i%40)==25)&&((j%30)==6)) return true;
+    if (((i%40)==25)&&((j%30)==7)) return true;
+    if (((i%40)==35)&&((j%30)==3)) return true;
+    if (((i%40)==35)&&((j%30)==4)) return true;
+    if (((i%40)==36)&&((j%30)==3)) return true;
+    if (((i%40)==36)&&((j%30)==4)) return true;
 
     return false;
 }
@@ -134,7 +153,8 @@ int main(void)
   cudaMemcpy(cuda_universe, universe, NENTRIES*sizeof(bool), cudaMemcpyHostToDevice);
   cudaEventRecord(start);
   for (int n=0; n<NEPOCHS-1; n++) {
-    Evolve<<<1+DIMENSIONX*DIMENSIONY/1024, 1024>>>(cuda_universe, n, DIMENSIONX, DIMENSIONY);
+    Evolve<<<32, 64>>>(cuda_universe, n, DIMENSIONX, DIMENSIONY);
+    cudaDeviceSynchronize();
   }
   cudaEventRecord(stop);
   float milliseconds = 0;
